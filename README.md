@@ -68,3 +68,124 @@ To build the Docker image locally:
 ```bash
 docker build -t yourdockerhubusername/stock-app:v1 .
 docker tag yourdockerhubusername/stock-app:v1 yourdockerhubusername/stock-app:latest
+```
+
+### Push to Docker Hub
+
+```bash
+docker login
+docker push yourdockerhubusername/stock-app:v1
+docker push yourdockerhubusername/stock-app:latest
+```
+
+### Deployment on Lab Servers
+
+#### Server Configuration
+* **Web01 & Web02:** Application servers running the containerized stock app
+* **Lb01:** Load balancer server running HAProxy
+
+#### Deploy on Web Servers (Web01 & Web02)
+
+1. **Pull and run the container:**
+   ```bash
+   docker pull yourdockerhubusername/stock-app:latest
+   docker run -d --name stock-app -p 8080:8080 \
+     -e ALPHA_VANTAGE_API_KEY="YOUR_ALPHA_VANTAGE_KEY" \
+     -e NEWS_API_KEY="YOUR_NEWS_API_KEY" \
+     yourdockerhubusername/stock-app:latest
+   ```
+
+#### HAProxy Configuration (Lb01)
+
+Create `/etc/haproxy/haproxy.cfg`:
+
+```
+global
+    daemon
+    maxconn 4096
+
+defaults
+    mode http
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend stock_app_frontend
+    bind *:80
+    default_backend stock_app_servers
+
+backend stock_app_servers
+    balance roundrobin
+    server web01 WEB01_IP:8080 check
+    server web02 WEB02_IP:8080 check
+```
+
+Restart HAProxy:
+```bash
+sudo systemctl restart haproxy
+```
+
+## Part Two B: AWS Deployment
+
+### Architecture Overview
+* **ECS Fargate:** Container orchestration
+* **Application Load Balancer:** Traffic distribution
+* **ECR:** Container registry
+* **VPC:** Network isolation
+
+### Deployment Steps
+
+1. **Push image to ECR:**
+   ```bash
+   aws ecr create-repository --repository-name stock-app
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+   docker tag yourdockerhubusername/stock-app:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/stock-app:latest
+   docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/stock-app:latest
+   ```
+
+2. **Create ECS cluster and service**
+3. **Configure Application Load Balancer**
+4. **Set up environment variables in ECS task definition**
+
+## API Endpoints
+
+* `GET /` - Main application interface
+* `GET /api/stock/<symbol>` - Get stock data for specific symbol
+* `GET /api/news` - Get latest financial news
+* `GET /api/news/<symbol>` - Get news for specific stock symbol
+
+## Project Structure
+
+```
+Stock-Market-Data-News-Aggregator/
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── main.js
+├── templates/
+│   └── index.html
+├── .env.example
+├── .gitignore
+├── app.py
+├── Dockerfile
+├── README.md
+└── requirements.txt
+```
+
+## Environment Variables
+
+* `ALPHA_VANTAGE_API_KEY` - API key for Alpha Vantage stock data
+* `NEWS_API_KEY` - API key for NewsAPI.org
+* `FLASK_ENV` - Flask environment (development/production)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

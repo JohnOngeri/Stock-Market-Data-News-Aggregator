@@ -44,6 +44,11 @@ button:hover {
     background-color: #0056b3;
 }
 
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
 .error-message {
     color: red;
     margin-bottom: 15px;
@@ -88,4 +93,27 @@ th {
 
 .news-article a:hover {
     text-decoration: underline;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.data-section {
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .input-section {
+        flex-direction: column;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 8px;
+    }
 }

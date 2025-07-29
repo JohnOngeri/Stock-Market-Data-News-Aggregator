@@ -1,12 +1,19 @@
 document.getElementById('fetchData').addEventListener('click', fetchData);
+document.getElementById('stockSymbols').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        fetchData();
+    }
+});
 
 async function fetchData() {
     const stockSymbols = document.getElementById('stockSymbols').value;
     const stockTableBody = document.querySelector('#stockTable tbody');
     const newsArticlesDiv = document.getElementById('newsArticles');
     const errorsDiv = document.getElementById('errors');
+    const fetchButton = document.getElementById('fetchData');
 
-    stockTableBody.innerHTML = ''; // Clear previous data
+    // Clear previous data
+    stockTableBody.innerHTML = '';
     newsArticlesDiv.innerHTML = '';
     errorsDiv.innerHTML = '';
 
@@ -14,6 +21,12 @@ async function fetchData() {
         errorsDiv.textContent = "Please enter at least one stock symbol.";
         return;
     }
+
+    // Show loading state
+    fetchButton.disabled = true;
+    fetchButton.textContent = 'Loading...';
+    stockTableBody.innerHTML = '<tr><td colspan="4">Loading stock data...</td></tr>';
+    newsArticlesDiv.innerHTML = '<p>Loading news articles...</p>';
 
     try {
         const response = await fetch('/get_stock_data', {
@@ -69,5 +82,11 @@ async function fetchData() {
     } catch (error) {
         console.error('Error fetching data:', error);
         errorsDiv.textContent = `An unexpected error occurred: ${error.message}`;
+        stockTableBody.innerHTML = '<tr><td colspan="4">Error loading data</td></tr>';
+        newsArticlesDiv.innerHTML = '<p>Error loading news articles</p>';
+    } finally {
+        // Reset button state
+        fetchButton.disabled = false;
+        fetchButton.textContent = 'Fetch Data';
     }
 }

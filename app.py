@@ -5,10 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv() # Load environment variables from .env
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 
+# Get API keys from environment variables
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+
+# Validate API keys are present
+if not ALPHA_VANTAGE_API_KEY or not NEWS_API_KEY:
+    raise ValueError("Missing required API keys. Please check your .env file.")
 
 @app.route('/')
 def index():
@@ -16,12 +21,23 @@ def index():
 
 @app.route('/get_stock_data', methods=['POST'])
 def get_stock_data():
-    symbols_str = request.json.get('symbols', '')
-    symbols = [s.strip().upper() for s in symbols_str.split(',') if s.strip()]
-    
-    stock_data = []
-    news_data = []
-    errors = []
+    try:
+        if not request.json:
+            return jsonify({"error": "Invalid request format"}), 400
+            
+        symbols_str = request.json.get('symbols', '')
+        if not symbols_str.strip():
+            return jsonify({"error": "No symbols provided"}), 400
+            
+        symbols = [s.strip().upper() for s in symbols_str.split(',') if s.strip()]
+        if len(symbols) > 10:  # Limit to prevent abuse
+            return jsonify({"error": "Too many symbols. Maximum 10 allowed."}), 400
+        
+        stock_data = []
+        news_data = []
+        errors = []
+    except Exception as e:
+        return jsonify({"error": "Server error processing request"}), 500
 
     for symbol in symbols:
         # Alpha Vantage Global Quote
@@ -69,5 +85,14 @@ def get_stock_data():
 
     return jsonify({"stock_data": stock_data, "news_data": news_data, "errors": errors})
 
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    port = int(os.getenv('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False)

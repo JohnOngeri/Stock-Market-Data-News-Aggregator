@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.gitignore
+README.md
+.env.example
+test_app.py
+start.bat
+start.sh
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+Thumbs.db

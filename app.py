@@ -19,6 +19,84 @@ if not ALPHA_VANTAGE_API_KEY or not NEWS_API_KEY:
 def index():
     return render_template('index.html')
 
+@app.route('/api/stock/<symbol>')
+def get_single_stock(symbol):
+    """Get stock data for a specific symbol"""
+    try:
+        symbol = symbol.upper().strip()
+        alpha_vantage_url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={ALPHA_VANTAGE_API_KEY}"
+        
+        response = requests.get(alpha_vantage_url)
+        response.raise_for_status()
+        data = response.json()
+        
+        if "Global Quote" in data:
+            quote = data["Global Quote"]
+            return jsonify({
+                "symbol": quote.get("01. symbol"),
+                "price": quote.get("05. price"),
+                "change": quote.get("09. change"),
+                "volume": quote.get("06. volume")
+            })
+        else:
+            return jsonify({"error": f"No data found for {symbol}"}), 404
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/news')
+def get_general_news():
+    """Get general financial news"""
+    try:
+        news_api_url = f"https://newsapi.org/v2/everything?q=finance stock market&apiKey={NEWS_API_KEY}&language=en&sortBy=relevancy"
+        
+        response = requests.get(news_api_url)
+        response.raise_for_status()
+        news_response = response.json()
+        
+        if news_response.get("status") == "ok":
+            articles = []
+            for article in news_response.get("articles", [])[:10]:
+                articles.append({
+                    "title": article.get("title"),
+                    "description": article.get("description"),
+                    "url": article.get("url"),
+                    "publishedAt": article.get("publishedAt")
+                })
+            return jsonify({"articles": articles})
+        else:
+            return jsonify({"error": "Failed to fetch news"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/news/<symbol>')
+def get_symbol_news(symbol):
+    """Get news for a specific stock symbol"""
+    try:
+        symbol = symbol.upper().strip()
+        news_api_url = f"https://newsapi.org/v2/everything?q={symbol} stock&apiKey={NEWS_API_KEY}&language=en&sortBy=relevancy"
+        
+        response = requests.get(news_api_url)
+        response.raise_for_status()
+        news_response = response.json()
+        
+        if news_response.get("status") == "ok":
+            articles = []
+            for article in news_response.get("articles", [])[:10]:
+                articles.append({
+                    "title": article.get("title"),
+                    "description": article.get("description"),
+                    "url": article.get("url"),
+                    "publishedAt": article.get("publishedAt")
+                })
+            return jsonify({"articles": articles})
+        else:
+            return jsonify({"error": f"No news found for {symbol}"}), 404
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/get_stock_data', methods=['POST'])
 def get_stock_data():
     try:

@@ -13,6 +13,7 @@
    - Replace `your-dockerhub-username` with your actual Docker Hub username
 
 2. **Login to Docker Hub**:
+
    ```bash
    docker login
    ```
@@ -20,11 +21,13 @@
 ## Step 2: Build and Push to Docker Hub
 
 **On Windows:**
+
 ```cmd
 deploy.bat
 ```
 
 **On Linux/Mac:**
+
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
@@ -35,17 +38,20 @@ chmod +x deploy.sh
 **On Web01 and Web02:**
 
 1. **Pull the image:**
+
    ```bash
    docker pull your-dockerhub-username/stock-market-aggregator:latest
    ```
 
 2. **Create .env file** with your API keys:
+
    ```bash
    ALPHA_VANTAGE_API_KEY=your_key_here
    NEWS_API_KEY=your_key_here
    ```
 
 3. **Deploy the container:**
+
    ```bash
    docker-compose -f docker-compose.prod.yml up -d
    ```
@@ -55,6 +61,7 @@ chmod +x deploy.sh
 1. **Install Nginx** on load balancer server
 2. **Copy nginx.conf** to `/etc/nginx/sites-available/stock-app`
 3. **Enable the site:**
+
    ```bash
    sudo ln -s /etc/nginx/sites-available/stock-app /etc/nginx/sites-enabled/
    sudo nginx -t
@@ -64,15 +71,16 @@ chmod +x deploy.sh
 ## Step 5: Verify Deployment
 
 1. **Check container health:**
+
    ```bash
    docker ps
    docker logs <container_id>
    ```
 
 2. **Test endpoints:**
-   - http://web01:8080/
-   - http://web02:8080/
-   - http://load-balancer/
+   - [http://web01:8080/](http://web01:8080/)
+   - [http://web02:8080/](http://web02:8080/)
+   - [http://load-balancer/](http://load-balancer/)
 
 ## Monitoring Commands
 

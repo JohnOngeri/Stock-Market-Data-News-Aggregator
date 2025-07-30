@@ -1,35 +1,41 @@
-# Use Python 3.11 slim for better performance
-FROM python:3.11-slim
+# Use a specific, slim Python base image for security and size
+FROM python:3.9-slim
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Set environment variables to improve Python's behavior in Docker
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+# Set the default port for the application. This can be overridden at runtime.
+ENV PORT=8080
 
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Create a non-root user and group for security
+# Running as a non-root user is a security best practice
+RUN addgroup --system app && adduser --system --group app
 
-# Copy and install Python dependencies
+# Copy only the requirements file to leverage Docker's layer caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Install dependencies using pip
+# --no-cache-dir reduces the image size
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code into the container
+# A .dockerignore file should be used to exclude unnecessary files
 COPY . .
 
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
-USER appuser
+# Change ownership of the app directory to the non-root user
+RUN chown -R app:app /app
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/ || exit 1
+# Switch to the non-root user
+USER app
 
-# Expose port
+# Expose the port the app will run on. This is for documentation and tooling.
+# The actual port is determined by the PORT environment variable.
 EXPOSE 8080
 
-# Run with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120", "wsgi:app"]
+# Command to run the application using Gunicorn, a production-grade WSGI server.
+# It binds to all network interfaces on the port specified by the PORT env var.
+# The 'exec' form is used so that Gunicorn becomes PID 1 and handles signals correctly.
+CMD exec gunicorn --bind 0.0.0.0:$PORT app:app

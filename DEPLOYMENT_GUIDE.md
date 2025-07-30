@@ -4,17 +4,18 @@ This guide provides comprehensive instructions for deploying the Stock Market Da
 
 ## 📋 Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Local Development Setup](#local-development-setup)
-3. [Docker Deployment](#docker-deployment)
-4. [Production Deployment with Load Balancing](#production-deployment-with-load-balancing)
-5. [Testing and Verification](#testing-and-verification)
-6. [Troubleshooting](#troubleshooting)
-7. [Security Considerations](#security-considerations)
+1. [Prerequisites](#-prerequisites)
+2. [Local Development Setup](#-local-development-setup)
+3. [Docker Deployment](#-docker-deployment)
+4. [Production Deployment with Load Balancing](#-production-deployment-with-load-balancing)
+5. [Testing and Verification](#-testing-and-verification)
+6. [Troubleshooting](#-troubleshooting)
+7. [Security Considerations](#-security-considerations)
 
 ## 🔧 Prerequisites
 
 ### Required Software
+
 - **Python 3.8+** - For local development
 - **Docker** - For containerized deployment
 - **Git** - For version control
@@ -23,6 +24,7 @@ This guide provides comprehensive instructions for deploying the Stock Market Da
   - [NewsAPI.org API Key](https://newsapi.org/register)
 
 ### System Requirements
+
 - **Minimum RAM**: 2GB
 - **Minimum Storage**: 1GB free space
 - **Network**: Internet connection for API calls
@@ -30,12 +32,14 @@ This guide provides comprehensive instructions for deploying the Stock Market Da
 ## 🏠 Local Development Setup
 
 ### Step 1: Clone the Repository
+
 ```bash
 git clone <your-repository-url>
 cd Stock-Market-Data-News-Aggregator
 ```
 
 ### Step 2: Set Up Python Environment
+
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -51,7 +55,9 @@ pip install -r requirements.txt
 ```
 
 ### Step 3: Configure Environment Variables
+
 Create a `.env` file in the root directory:
+
 ```env
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
 NEWS_API_KEY=your_news_api_key_here
@@ -59,6 +65,7 @@ PORT=8080
 ```
 
 ### Step 4: Run the Application
+
 ```bash
 python app.py
 ```
@@ -66,6 +73,7 @@ python app.py
 The application will be available at `http://localhost:8080`
 
 ### Step 5: Run Tests
+
 ```bash
 # Run all tests
 python test_app.py
@@ -79,6 +87,7 @@ python simple_test.py
 ### Local Docker Build and Run
 
 #### Step 1: Build the Docker Image
+
 ```bash
 # Build the image
 docker build -t stock-market-aggregator:v1 .
@@ -88,6 +97,7 @@ docker images | grep stock-market-aggregator
 ```
 
 #### Step 2: Run the Container
+
 ```bash
 # Run with environment variables
 docker run -d \
@@ -106,6 +116,7 @@ docker run -d \
 ```
 
 #### Step 3: Verify the Container
+
 ```bash
 # Check container status
 docker ps
@@ -118,6 +129,7 @@ curl http://localhost:8080
 ```
 
 #### Step 4: Stop and Clean Up
+
 ```bash
 # Stop the container
 docker stop stock-app
@@ -129,6 +141,7 @@ docker rm stock-app
 ### Docker Hub Deployment
 
 #### Step 1: Tag for Docker Hub
+
 ```bash
 # Login to Docker Hub
 docker login
@@ -138,6 +151,7 @@ docker tag stock-market-aggregator:v1 <your-dockerhub-username>/stock-market-agg
 ```
 
 #### Step 2: Push to Docker Hub
+
 ```bash
 # Push the image
 docker push <your-dockerhub-username>/stock-market-aggregator:v1
@@ -147,6 +161,7 @@ docker search <your-dockerhub-username>/stock-market-aggregator
 ```
 
 #### Step 3: Pull and Run from Docker Hub
+
 ```bash
 # Pull the image
 docker pull <your-dockerhub-username>/stock-market-aggregator:v1
@@ -165,6 +180,7 @@ docker run -d \
 ### Lab Environment Setup
 
 This deployment uses the lab infrastructure with three servers:
+
 - **Web01**: Application server 1
 - **Web02**: Application server 2  
 - **Lb01**: Load balancer (HAProxy)
@@ -230,6 +246,7 @@ sudo nano /etc/haproxy/haproxy.cfg
 ```
 
 Add or update the backend configuration:
+
 ```haproxy
 backend webapps
     balance roundrobin
@@ -238,6 +255,7 @@ backend webapps
 ```
 
 Reload HAProxy:
+
 ```bash
 # Reload HAProxy configuration
 docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
@@ -265,6 +283,7 @@ curl http://web-02:8080
 ### Application Testing
 
 #### 1. Basic Functionality Test
+
 ```bash
 # Test home page
 curl http://localhost:8080
@@ -275,6 +294,7 @@ curl http://localhost:8080/api/news
 ```
 
 #### 2. Load Balancing Verification
+
 ```bash
 # Test multiple requests to verify round-robin
 for i in {1..6}; do
@@ -285,6 +305,7 @@ done
 ```
 
 #### 3. Health Check Verification
+
 ```bash
 # Check container health
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -296,6 +317,7 @@ curl -f http://localhost:8080/ || echo "Health check failed"
 ### Performance Testing
 
 #### 1. Load Testing
+
 ```bash
 # Install Apache Bench (if available)
 sudo apt-get install apache2-utils
@@ -305,6 +327,7 @@ ab -n 100 -c 10 http://localhost:8080/
 ```
 
 #### 2. Stress Testing
+
 ```bash
 # Test with multiple concurrent users
 for i in {1..50}; do
@@ -318,6 +341,7 @@ wait
 ### Common Issues and Solutions
 
 #### 1. Container Won't Start
+
 ```bash
 # Check container logs
 docker logs <container-name>
@@ -330,6 +354,7 @@ docker rm -f <container-name>
 ```
 
 #### 2. API Key Issues
+
 ```bash
 # Verify environment variables
 docker exec <container-name> env | grep API_KEY
@@ -339,6 +364,7 @@ docker logs <container-name> | grep -i "api\|error"
 ```
 
 #### 3. Load Balancer Issues
+
 ```bash
 # Check HAProxy status
 docker exec -it lb-01 sh -c 'haproxy -c -f /etc/haproxy/haproxy.cfg'
@@ -351,6 +377,7 @@ docker exec -it lb-01 sh -c 'haproxy -c -f /etc/haproxy/haproxy.cfg' | grep back
 ```
 
 #### 4. Network Connectivity Issues
+
 ```bash
 # Test connectivity between servers
 ping web-01
@@ -365,6 +392,7 @@ telnet web-02 8080
 ### Debugging Commands
 
 #### Container Debugging
+
 ```bash
 # Enter container shell
 docker exec -it <container-name> /bin/bash
@@ -377,6 +405,7 @@ docker exec <container-name> curl -I http://localhost:8080
 ```
 
 #### Application Debugging
+
 ```bash
 # View real-time logs
 docker logs -f <container-name>
@@ -391,21 +420,25 @@ docker exec <container-name> curl http://localhost:8080/api/stock/AAPL
 ## 🔒 Security Considerations
 
 ### Environment Variables
+
 - Never commit API keys to version control
 - Use Docker secrets in production
 - Rotate API keys regularly
 
 ### Network Security
+
 - Use HTTPS in production
 - Implement rate limiting
 - Configure firewall rules
 
 ### Container Security
+
 - Run containers as non-root user
 - Keep base images updated
 - Scan images for vulnerabilities
 
 ### API Security
+
 - Validate all user inputs
 - Implement request rate limiting
 - Monitor API usage
@@ -413,6 +446,7 @@ docker exec <container-name> curl http://localhost:8080/api/stock/AAPL
 ## 📊 Monitoring and Logging
 
 ### Application Monitoring
+
 ```bash
 # Monitor container resource usage
 docker stats
@@ -425,6 +459,7 @@ curl -f http://localhost:8080/health
 ```
 
 ### Load Balancer Monitoring
+
 ```bash
 # Check HAProxy statistics
 curl http://lb-01:8080/stats
@@ -436,6 +471,7 @@ docker exec -it lb-01 sh -c 'haproxy -c -f /etc/haproxy/haproxy.cfg'
 ## 🔄 Maintenance and Updates
 
 ### Updating the Application
+
 ```bash
 # Pull latest image
 docker pull <your-dockerhub-username>/stock-market-aggregator:v1
@@ -457,6 +493,7 @@ docker run -d \
 ```
 
 ### Backup and Recovery
+
 ```bash
 # Backup container configuration
 docker inspect <container-name> > backup.json
@@ -474,6 +511,7 @@ docker run -d \
 ## 📝 Deployment Checklist
 
 ### Pre-Deployment
+
 - [ ] API keys obtained and configured
 - [ ] Docker images built and tested
 - [ ] Environment variables set
@@ -481,6 +519,7 @@ docker run -d \
 - [ ] Security configurations applied
 
 ### Deployment
+
 - [ ] Containers deployed on Web01 and Web02
 - [ ] Load balancer configured
 - [ ] Health checks passing
@@ -488,6 +527,7 @@ docker run -d \
 - [ ] Round-robin load balancing verified
 
 ### Post-Deployment
+
 - [ ] Performance testing completed
 - [ ] Security testing performed
 - [ ] Monitoring configured
@@ -497,6 +537,7 @@ docker run -d \
 ## 📞 Support
 
 For deployment issues:
+
 1. Check the troubleshooting section above
 2. Review container logs: `docker logs <container-name>`
 3. Verify network connectivity

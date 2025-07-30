@@ -9,67 +9,38 @@
 <body>
     <div class="container">
         <h1>Stock Market Data & News Aggregator</h1>
-        <p class="subtitle">Get real-time stock data and financial news in one place</p>
-        
+        <p class="subtitle">Your one-stop dashboard for financial data and news.</p>
+
+        <div id="errors" class="error-message"></div>
+
         <div class="input-section">
-            <input type="text" id="stockSymbols" placeholder="Enter stock symbols (e.g., AAPL, MSFT, GOOGL)">
+            <label for="stockSymbols" class="visually-hidden">Enter stock symbols (comma-separated)</label>
+            <input type="text" id="stockSymbols" placeholder="Enter stock symbols (e.g., AAPL, MSFT, GOOGL)" required>
             <button id="fetchData">Fetch Data</button>
         </div>
-        
-        <div id="errors" class="error-message"></div>
-        
+
         <div class="data-section">
             <div class="stock-section">
-                <h2>Stock Prices</h2>
-                    <div class="controls">
-                    <input type="text" id="stockSearch" placeholder="Search stocks..." class="search-input" aria-label="Search stocks">
-                    <label for="stockSort" class="visually-hidden">Sort stocks by</label>
-                    <select id="stockSort" class="sort-select" title="Sort stocks by">
-                        <option value="symbol">Sort by Symbol</option>
-                        <option value="price">Sort by Price</option>
-                        <option value="change">Sort by Change</option>
-                        <option value="volume">Sort by Volume</option>
-                    </select>
-                    <button id="refreshStocks" class="refresh-btn" aria-label="Refresh stock data">Refresh</button>
+                <h2>Stock Data</h2>
+                <div class="controls">
+                    <input type="text" id="stockSearch" class="search-input" placeholder="Search stocks...">
                 </div>
-                <table id="stockTable">
-                    <thead>
-                        <tr>
-                            <th data-sort="symbol">Symbol ↕</th>
-                            <th data-sort="price">Price ↕</th>
-                            <th data-sort="change">Change ↕</th>
-                            <th data-sort="volume">Volume ↕</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                <div id="stockTable">
+                    <!-- Stock data table will be inserted here -->
+                </div>
             </div>
 
             <div class="news-section">
-                <h2>Latest Financial News</h2>
+                <h2>Financial News</h2>
                 <div class="controls">
-                    <input type="text" id="newsSearch" placeholder="Search news..." class="search-input" aria-label="Search news">
-                    <label for="newsFilter" class="visually-hidden">Filter news by</label>
-                    <select id="newsFilter" class="filter-select" title="Filter news by">
-                        <option value="all">All News</option>
-                        <option value="market">Market News</option>
-                        <option value="tech">Tech News</option>
-                        <option value="finance">Finance News</option>
-                    </select>
-                    <button id="refreshNews" class="refresh-btn">Refresh</button>
+                    <input type="text" id="newsSearch" class="search-input" placeholder="Search news...">
                 </div>
                 <div id="newsArticles">
+                    <!-- News articles will be inserted here -->
                 </div>
             </div>
         </div>
-        
-        <div class="api-info">
-            <h3>API Information</h3>
-            <p>Stock data provided by <a href="https://www.alphavantage.co/" target="_blank" rel="noopener">Alpha Vantage</a></p>
-            <p>News articles provided by <a href="https://newsapi.org/" target="_blank" rel="noopener">NewsAPI.org</a></p>
-        </div>
-    </div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

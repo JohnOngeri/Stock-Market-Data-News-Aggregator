@@ -18,6 +18,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 ## 🚀 Part One: Local Implementation
 
 ### Technology Stack
+
 - **Backend**: Python Flask
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
 - **APIs**: Alpha Vantage (Stock Data), NewsAPI.org (Financial News)
@@ -26,6 +27,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 ### External APIs Used
 
 #### 1. Alpha Vantage API
+
 - **Purpose**: Real-time stock market data
 - **Documentation**: [Alpha Vantage API Docs](https://www.alphavantage.co/documentation/)
 - **Rate Limits**: 5 API calls per minute, 500 per day (free tier)
@@ -33,6 +35,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 - **Credit**: Stock data provided by Alpha Vantage
 
 #### 2. NewsAPI.org
+
 - **Purpose**: Financial news aggregation
 - **Documentation**: [NewsAPI Documentation](https://newsapi.org/docs)
 - **Rate Limits**: 1,000 requests per day (free tier)
@@ -42,6 +45,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 ### User Interface Features
 
 #### Interactive Data Presentation
+
 - **Stock Data Sorting**: Sort by symbol, price, change, or volume
 - **News Filtering**: Filter by category (Market, Tech, Finance)
 - **Search Functionality**: Search through stocks and news articles
@@ -49,6 +53,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 - **Responsive Design**: Works on desktop and mobile devices
 
 #### User Experience Enhancements
+
 - **Default Data Loading**: Pre-loads popular stocks for immediate value
 - **Keyboard Navigation**: Ctrl/Cmd + Enter to fetch data
 - **Debounced Search**: Prevents excessive API calls during typing
@@ -58,6 +63,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 ### Error Handling Implementation
 
 #### API Error Handling
+
 - Network timeout handling
 - Invalid API key detection
 - Rate limit exceeded handling
@@ -65,12 +71,14 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 - Graceful degradation when APIs fail
 
 #### User Input Validation
+
 - Empty input validation
 - Symbol format validation
 - Maximum symbol limit enforcement (10 symbols)
 - Special character sanitization
 
 #### Graceful Degradation
+
 - Partial data display when some APIs fail
 - User-friendly error messages
 - Fallback to cached data when available
@@ -80,6 +88,7 @@ This is **not** a gimmick application like random joke generators or cat facts. 
 ### Containerization (Docker)
 
 #### Dockerfile Features
+
 ```dockerfile
 # Use Python 3.11 slim for better performance
 FROM python:3.11-slim
@@ -96,6 +105,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120",
 ```
 
 #### Docker Hub Deployment
+
 - **Image Name**: `<dockerhub-username>/stock-market-aggregator:v1`
 - **Build Command**: `docker build -t <dockerhub-username>/stock-market-aggregator:v1 .`
 - **Push Command**: `docker push <dockerhub-username>/stock-market-aggregator:v1`
@@ -104,6 +114,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120",
 ### Production Deployment with Load Balancing
 
 #### Lab Environment Setup
+
 - **Web01**: Application server 1 (172.20.0.11:8080)
 - **Web02**: Application server 2 (172.20.0.12:8080)
 - **Lb01**: Load balancer (HAProxy)
@@ -111,6 +122,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120",
 #### Deployment Commands
 
 **Web01 Deployment:**
+
 ```bash
 ssh web-01
 docker pull <dockerhub-username>/stock-market-aggregator:v1
@@ -122,6 +134,7 @@ docker run -d --name stock-app-1 --restart unless-stopped \
 ```
 
 **Web02 Deployment:**
+
 ```bash
 ssh web-02
 docker pull <dockerhub-username>/stock-market-aggregator:v1
@@ -135,6 +148,7 @@ docker run -d --name stock-app-2 --restart unless-stopped \
 #### Load Balancer Configuration
 
 **HAProxy Configuration:**
+
 ```haproxy
 backend webapps
     balance roundrobin
@@ -143,11 +157,13 @@ backend webapps
 ```
 
 **Reload HAProxy:**
+
 ```bash
 docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
 ```
 
 #### Load Balancing Verification
+
 ```bash
 # Test round-robin distribution
 for i in {1..10}; do
@@ -161,6 +177,7 @@ done
 ### Comprehensive Test Suite
 
 #### Unit Tests (`test_app.py`)
+
 - **API Endpoint Testing**: All endpoints tested with mocked responses
 - **Error Handling**: Tests for API failures, invalid inputs, rate limiting
 - **Input Validation**: Tests for empty inputs, too many symbols, invalid formats
@@ -168,6 +185,7 @@ done
 - **Integration Tests**: Complete workflow testing
 
 #### Test Coverage
+
 - **Home Page Loading**: Tests main interface loads correctly
 - **API Endpoints**: Tests all `/api/*` endpoints
 - **Error Scenarios**: Tests 404, 500, and API error handling
@@ -176,6 +194,7 @@ done
 - **Template Rendering**: Tests HTML template rendering
 
 #### Test Execution
+
 ```bash
 # Run all tests
 python test_app.py
@@ -185,6 +204,7 @@ python simple_test.py
 ```
 
 ### Performance Testing
+
 - **Load Testing**: Apache Bench for concurrent user testing
 - **Stress Testing**: Multiple concurrent requests
 - **Health Checks**: Container and application health monitoring
@@ -192,6 +212,7 @@ python simple_test.py
 ## 📊 Application Features
 
 ### Core Functionality
+
 1. **Real-time Stock Data**: Fetch current prices, changes, and volume
 2. **Financial News Aggregation**: Latest news from reputable sources
 3. **Interactive Interface**: Sort, filter, and search capabilities
@@ -199,6 +220,7 @@ python simple_test.py
 5. **Responsive Design**: Mobile and desktop compatibility
 
 ### User Interaction Features
+
 1. **Stock Data Sorting**: By symbol, price, change, or volume
 2. **News Filtering**: By category (Market, Tech, Finance)
 3. **Search Functionality**: Real-time search through data
@@ -206,6 +228,7 @@ python simple_test.py
 5. **Keyboard Shortcuts**: Ctrl/Cmd + Enter for data fetching
 
 ### Security Features
+
 1. **Input Validation**: All user inputs validated and sanitized
 2. **API Key Management**: Environment variables for sensitive data
 3. **Rate Limiting**: Built-in protection against API abuse
@@ -215,18 +238,21 @@ python simple_test.py
 ## 🔒 Security Implementation
 
 ### API Key Security
+
 - **Environment Variables**: API keys stored in `.env` file
 - **Docker Secrets**: Production-ready secret management
 - **No Hardcoding**: No API keys in source code
 - **Key Rotation**: Support for regular key updates
 
 ### Input Validation
+
 - **Symbol Validation**: Proper stock symbol format checking
 - **Length Limits**: Maximum 10 symbols per request
 - **Special Character Handling**: Sanitization of user inputs
 - **SQL Injection Protection**: Parameterized queries
 
 ### Container Security
+
 - **Non-root User**: Application runs as `appuser`
 - **Health Checks**: Regular container health monitoring
 - **Resource Limits**: Docker resource constraints
@@ -235,16 +261,19 @@ python simple_test.py
 ## 📈 Performance Optimizations
 
 ### Caching Strategy
+
 - **API Response Caching**: Reduce API load
 - **Static Asset Caching**: Browser-side caching
 - **Debounced Search**: Prevent excessive API calls
 
 ### Load Balancing
+
 - **Round-robin Distribution**: Even traffic distribution
 - **Health Checks**: Automatic failover
 - **Multiple Workers**: Gunicorn with 4 workers
 
 ### Error Handling
+
 - **Graceful Degradation**: Partial data when APIs fail
 - **User-friendly Messages**: Clear error communication
 - **Retry Logic**: Automatic retry for transient failures
@@ -252,6 +281,7 @@ python simple_test.py
 ## 📝 Documentation
 
 ### Comprehensive README
+
 - **Setup Instructions**: Step-by-step local and Docker setup
 - **API Documentation**: Complete endpoint documentation
 - **Deployment Guide**: Production deployment instructions
@@ -259,6 +289,7 @@ python simple_test.py
 - **Troubleshooting**: Common issues and solutions
 
 ### Deployment Documentation
+
 - **Docker Hub Instructions**: Image building and pushing
 - **Load Balancer Setup**: HAProxy configuration
 - **Environment Configuration**: API key setup
@@ -267,6 +298,7 @@ python simple_test.py
 ## 🎯 Assignment Requirements Compliance
 
 ### Part One: Local Implementation ✅
+
 - [x] **External APIs**: Alpha Vantage and NewsAPI.org
 - [x] **API Documentation**: Thorough documentation with links
 - [x] **User Interaction**: Sorting, filtering, searching
@@ -275,6 +307,7 @@ python simple_test.py
 - [x] **Practical Purpose**: Real financial market application
 
 ### Part Two A: Docker Deployment ✅
+
 - [x] **Containerization**: Complete Docker implementation
 - [x] **Docker Hub**: Image published and accessible
 - [x] **Lab Deployment**: Web01, Web02, Lb01 setup
@@ -283,6 +316,7 @@ python simple_test.py
 - [x] **Documentation**: Complete deployment instructions
 
 ### Bonus Features (Optional) ✅
+
 - [x] **Enhanced Features**: Advanced sorting and filtering
 - [x] **Performance Optimization**: Caching and debouncing
 - [x] **Containerization**: Docker with health checks
@@ -292,12 +326,14 @@ python simple_test.py
 ## 🚀 Deliverables
 
 ### Source Code Repository
+
 - **GitHub Repository**: Complete source code with `.gitignore`
 - **Documentation**: Comprehensive README and deployment guides
 - **Testing**: Complete test suite with coverage
 - **Configuration**: Docker and environment setup files
 
 ### Demo Video Requirements
+
 - **Duration**: Under 2 minutes
 - **Content**: Local usage and load balancer access
 - **Features**: Key functionality demonstration
@@ -305,6 +341,7 @@ python simple_test.py
 - **Load Balancing**: Round-robin demonstration
 
 ### README Documentation
+
 - **Setup Instructions**: Local and Docker deployment
 - **API Information**: Links to official documentation
 - **Deployment Steps**: Lab environment setup
@@ -314,6 +351,7 @@ python simple_test.py
 ## 🏆 Project Achievements
 
 ### Technical Excellence
+
 - **Modern Web Technologies**: Flask, HTML5, CSS3, JavaScript
 - **Containerization**: Production-ready Docker implementation
 - **Load Balancing**: HAProxy with health checks
@@ -321,6 +359,7 @@ python simple_test.py
 - **Documentation**: Complete and detailed guides
 
 ### User Experience
+
 - **Intuitive Interface**: Modern, responsive design
 - **Interactive Features**: Sorting, filtering, searching
 - **Error Handling**: User-friendly error messages
@@ -328,6 +367,7 @@ python simple_test.py
 - **Accessibility**: Keyboard navigation and screen reader support
 
 ### Production Readiness
+
 - **Security**: Input validation and API key management
 - **Monitoring**: Health checks and logging
 - **Scalability**: Load balancing and container orchestration
@@ -337,6 +377,7 @@ python simple_test.py
 ## 📞 Support and Maintenance
 
 ### Development Challenges Overcome
+
 1. **API Rate Limiting**: Implemented caching and user-friendly error messages
 2. **Cross-Origin Issues**: Configured proper CORS headers
 3. **Load Balancer Configuration**: Proper HAProxy setup with health checks
@@ -344,6 +385,7 @@ python simple_test.py
 5. **Error Handling**: Comprehensive error management for all scenarios
 
 ### Future Enhancements
+
 - **Authentication**: User accounts and personalized settings
 - **Advanced Analytics**: Historical data and charts
 - **Real-time Updates**: WebSocket implementation

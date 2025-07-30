@@ -1,11 +1,13 @@
 import os
 import requests
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 load_dotenv() # Load environment variables from .env
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
+CORS(app)  # Enable CORS for all routes
 
 # Get API keys from environment variables
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")

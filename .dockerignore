@@ -1,17 +1,29 @@
+# Git
+.git
+.gitignore
+
+# Virtual Environments
 venv/
+env/
+.venv/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.git/
-.gitignore
-README.md
-.env.example
-test_app.py
-start.bat
-start.sh
-.pytest_cache/
-.coverage
-htmlcov/
-.DS_Store
-Thumbs.db
+
+# Environment files - do not include secrets in the image
+.env
+.env.*
+
+# Documentation, build scripts, and local configs
+*.md
+*.sh
+*.bat

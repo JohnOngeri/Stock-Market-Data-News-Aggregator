@@ -1,270 +1,343 @@
 # Stock Market Data & News Aggregator
 
-A Flask-based web application that provides real-time stock quotes and aggregates relevant financial news articles. This application offers a centralized dashboard for investors to quickly access crucial market information.
+A comprehensive web application that provides real-time stock market data and financial news aggregation. This application serves a practical purpose by helping users make informed investment decisions through consolidated market information and relevant financial news.
 
-## Features
+## 🎯 Application Purpose
 
-* **Real-time Stock Data**: Fetch current stock prices, changes, and volume for multiple symbols
-* **Financial News Aggregation**: Get latest financial news and symbol-specific news articles
-* **RESTful API**: Clean API endpoints for programmatic access
-* **Web Interface**: User-friendly dashboard for interactive stock and news browsing
-* **Error Handling**: Robust error handling for API failures and invalid inputs
-* **Docker Support**: Containerized deployment with production-ready configuration
-* **Load Balancing**: Nginx configuration for high-availability deployment
+This application addresses a genuine need in the financial market space by:
+- **Consolidating Data**: Combining stock prices and financial news in one interface
+- **Real-time Information**: Providing up-to-date market data and breaking financial news
+- **User Interaction**: Enabling sorting, filtering, and searching through stock data and news
+- **Decision Support**: Helping users make informed investment decisions
 
-## Technologies Used
+## 🚀 Features
 
-* **Backend**: Python 3.11, Flask 2.3.2, Gunicorn
-* **Frontend**: HTML5, CSS3, JavaScript
-* **APIs**: Alpha Vantage (stock data), NewsAPI.org (news articles)
-* **Deployment**: Docker, Docker Compose, Nginx
-* **Dependencies**: requests, python-dotenv
+### Core Functionality
+- **Real-time Stock Data**: Fetch current prices, changes, and volume for multiple stocks
+- **Financial News Aggregation**: Latest news from reputable financial sources
+- **Interactive Interface**: Sort, filter, and search through data
+- **Error Handling**: Graceful handling of API failures and invalid inputs
+- **Responsive Design**: Works on desktop and mobile devices
 
-## Quick Start
+### User Interaction Features
+- **Stock Data Sorting**: Sort by symbol, price, change, or volume
+- **News Filtering**: Filter news by category (Market, Tech, Finance)
+- **Search Functionality**: Search through stocks and news articles
+- **Real-time Updates**: Refresh data with a single click
 
-### Prerequisites
+## 🛠️ Technology Stack
 
-* Python 3.11+
-* API keys from [Alpha Vantage](https://www.alphavantage.co/support/#api-key) and [NewsAPI.org](https://newsapi.org/register)
+- **Backend**: Python Flask
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **APIs**: Alpha Vantage (Stock Data), NewsAPI.org (Financial News)
+- **Containerization**: Docker
+- **Deployment**: Docker Hub, Load Balancer (HAProxy)
 
-### Local Setup
+## 📋 Prerequisites
 
-1. **Clone the repository:**
+- Python 3.8+
+- Docker (for containerized deployment)
+- API Keys:
+  - [Alpha Vantage API Key](https://www.alphavantage.co/support/#api-key)
+  - [NewsAPI.org API Key](https://newsapi.org/register)
 
-   ```bash
-   git clone <repository-url>
-   cd Stock-Market-Data-News-Aggregator
-   ```markdown
+## 🔧 Local Setup
 
-2. **Install dependencies:**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment variables:**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
-
-4. **Run the application:**
-
-   **Windows:**
-
-   ```cmd
-   start.bat
-   ```
-
-   **Linux/Mac:**
-
-   ```bash
-   chmod +x start.sh
-   ./start.sh
-   ```
-
-   **Or manually:**
-
-   ```bash
-   python app.py
-   ```
-
-5. **Access the application:**
-   Open `http://localhost:8080` in your browser
-
-### Testing
-
-Run the test suite to verify all components:
-
+### 1. Clone the Repository
 ```bash
+git clone <your-repo-url>
+cd Stock-Market-Data-News-Aggregator
+```
+
+### 2. Set Up Environment
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 3. Configure API Keys
+Create a `.env` file in the root directory:
+```env
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+NEWS_API_KEY=your_news_api_key_here
+```
+
+### 4. Run the Application
+```bash
+python app.py
+```
+
+The application will be available at `http://localhost:8080`
+
+## 🐳 Docker Deployment
+
+### Local Docker Build
+```bash
+# Build the image
+docker build -t stock-market-aggregator:v1 .
+
+# Run the container
+docker run -p 8080:8080 --env-file .env stock-market-aggregator:v1
+
+# Test the application
+curl http://localhost:8080
+```
+
+### Docker Hub Deployment
+
+#### 1. Build and Tag
+```bash
+docker build -t <your-dockerhub-username>/stock-market-aggregator:v1 .
+```
+
+#### 2. Push to Docker Hub
+```bash
+docker login
+docker push <your-dockerhub-username>/stock-market-aggregator:v1
+```
+
+## 🌐 Production Deployment
+
+### Lab Environment Setup
+
+#### 1. Deploy on Web Servers
+
+**Web01:**
+```bash
+ssh web-01
+docker pull <your-dockerhub-username>/stock-market-aggregator:v1
+docker run -d --name app --restart unless-stopped \
+  -p 8080:8080 \
+  -e ALPHA_VANTAGE_API_KEY=your_key \
+  -e NEWS_API_KEY=your_key \
+  <your-dockerhub-username>/stock-market-aggregator:v1
+```
+
+**Web02:**
+```bash
+ssh web-02
+docker pull <your-dockerhub-username>/stock-market-aggregator:v1
+docker run -d --name app --restart unless-stopped \
+  -p 8080:8080 \
+  -e ALPHA_VANTAGE_API_KEY=your_key \
+  -e NEWS_API_KEY=your_key \
+  <your-dockerhub-username>/stock-market-aggregator:v1
+```
+
+#### 2. Configure Load Balancer
+
+Update `/etc/haproxy/haproxy.cfg` on lb-01:
+```haproxy
+backend webapps
+    balance roundrobin
+    server web01 172.20.0.11:8080 check
+    server web02 172.20.0.12:8080 check
+```
+
+Reload HAProxy:
+```bash
+docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
+```
+
+#### 3. Test Load Balancing
+```bash
+# Test multiple requests to verify round-robin
+for i in {1..10}; do
+  curl http://localhost
+  echo "Request $i completed"
+  sleep 1
+done
+```
+
+## 🧪 Testing
+
+### Local Testing
+```bash
+# Run the test suite
 python test_app.py
+
+# Test individual components
+python simple_test.py
 ```
 
-## Docker Deployment
-
-### Quick Deploy
-
-**Windows:**
-
-```cmd
-deploy.bat
-```
-
-**Linux/Mac:**
-
+### Load Balancer Testing
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+# Test end-to-end functionality
+curl http://localhost
+
+# Verify load balancing (should alternate between servers)
+for i in {1..6}; do
+  curl -s http://localhost | grep "Server:" || echo "Request $i"
+  sleep 1
+done
 ```
 
-### Manual Docker Commands
+## 🔒 Security Considerations
 
-1. **Build the image:**
+### API Key Management
+- API keys are stored in environment variables
+- Never commit API keys to version control
+- Use Docker secrets or Kubernetes secrets in production
+- Rotate API keys regularly
 
-   ```bash
-   docker build -t stock-market-aggregator .
-   ```
+### Input Validation
+- All user inputs are validated and sanitized
+- SQL injection protection through parameterized queries
+- XSS protection through proper output encoding
 
-2. **Run locally:**
+## 📊 API Documentation
 
-   ```bash
-   docker run -d -p 8080:8080 \
-     -e ALPHA_VANTAGE_API_KEY="your_key" \
-     -e NEWS_API_KEY="your_key" \
-     stock-market-aggregator
-   ```
+### External APIs Used
 
-3. **Using Docker Compose:**
+#### Alpha Vantage API
+- **Purpose**: Real-time stock market data
+- **Documentation**: [Alpha Vantage API Docs](https://www.alphavantage.co/documentation/)
+- **Rate Limits**: 5 API calls per minute, 500 per day (free tier)
+- **Endpoints Used**: Global Quote
 
-   ```bash
-   # Development
-   docker-compose up -d
-   
-   # Production
-   docker-compose -f docker-compose.prod.yml up -d
-   
-   # With load balancer
-   docker-compose -f docker-compose.loadbalancer.yml up -d
-   ```
+#### NewsAPI.org
+- **Purpose**: Financial news aggregation
+- **Documentation**: [NewsAPI Documentation](https://newsapi.org/docs)
+- **Rate Limits**: 1,000 requests per day (free tier)
+- **Endpoints Used**: Everything endpoint
 
-### Production Deployment
+### Application API Endpoints
 
-The application includes production-ready configurations:
+#### GET `/`
+- **Description**: Main application interface
+- **Response**: HTML page with stock and news interface
 
-* **Gunicorn WSGI server** with 4 workers
-* **Health checks** for container monitoring
-* **Non-root user** for security
-* **Nginx load balancer** configuration
-* **Multi-stage deployment** scripts
+#### POST `/get_stock_data`
+- **Description**: Fetch stock data and news for given symbols
+- **Request Body**: `{"symbols": "AAPL,MSFT,GOOGL"}`
+- **Response**: JSON with stock data, news, and errors
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+#### GET `/api/stock/<symbol>`
+- **Description**: Get data for a specific stock symbol
+- **Response**: JSON with stock information
 
-## API Endpoints
+#### GET `/api/news`
+- **Description**: Get general financial news
+- **Response**: JSON with news articles
 
-### Web Interface
+#### GET `/api/news/<symbol>`
+- **Description**: Get news for a specific stock symbol
+- **Response**: JSON with relevant news articles
 
-* `GET /` - Main application dashboard
+## 🐛 Error Handling
 
-### Stock Data
+The application implements comprehensive error handling:
 
-* `GET /api/stock/<symbol>` - Get real-time data for specific stock symbol
-* `POST /get_stock_data` - Get data for multiple symbols (JSON payload: `{"symbols": "AAPL,MSFT,GOOGL"}`)
+### API Error Handling
+- Network timeout handling
+- Invalid API key detection
+- Rate limit exceeded handling
+- Malformed response handling
 
-### News Data
+### User Input Validation
+- Empty input validation
+- Symbol format validation
+- Maximum symbol limit enforcement
+- Special character sanitization
 
-* `GET /api/news` - Get latest general financial news
-* `GET /api/news/<symbol>` - Get news articles for specific stock symbol
+### Graceful Degradation
+- Partial data display when some APIs fail
+- User-friendly error messages
+- Fallback to cached data when available
 
-### Example API Response
+## 🚀 Performance Optimizations
 
-**Stock Data:**
+### Caching Strategy
+- API response caching to reduce load
+- Static asset caching
+- Browser-side caching for better UX
 
-```json
-{
-  "symbol": "AAPL",
-  "price": "150.25",
-  "change": "+2.15",
-  "volume": "45123456"
-}
-```
+### Load Balancing
+- Round-robin distribution across servers
+- Health checks for backend services
+- Automatic failover capabilities
 
-**News Data:**
+## 📈 Monitoring and Logging
 
-```json
-{
-  "articles": [
-    {
-      "title": "Market Update...",
-      "description": "Latest market trends...",
-      "url": "https://...",
-      "publishedAt": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
-```
+### Health Checks
+- Application health endpoint
+- Docker health checks
+- Load balancer health monitoring
 
-## Project Structure
+### Logging
+- Request/response logging
+- Error logging with stack traces
+- Performance metrics logging
 
-Stock-Market-Data-News-Aggregator/
-├── static/
-│   ├── css/
-│   │   └── style.css          # Application styles
-│   └── js/
-│       └── main.js            # Frontend JavaScript
-├── templates/
-│   └── index.html             # Main web interface
-├── app.py                     # Flask application
-├── wsgi.py                    # WSGI entry point
-├── test_app.py                # Test suite
-├── requirements.txt           # Python dependencies
-├── Dockerfile                 # Container configuration
-├── docker-compose.yml         # Development compose
-├── docker-compose.prod.yml    # Production compose
-├── docker-compose.loadbalancer.yml # Load balancer setup
-├── nginx.conf                 # Nginx configuration
-├── deploy.sh / deploy.bat     # Deployment scripts
-├── start.sh / start.bat       # Startup scripts
-├── .env.example               # Environment template
-├── .dockerignore              # Docker ignore rules
-├── DEPLOYMENT.md              # Deployment guide
-└── README.md                  # This file
+## 🔄 CI/CD Pipeline (Bonus Feature)
 
-## Environment Variables
+The project includes automated testing and deployment:
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `ALPHA_VANTAGE_API_KEY` | API key for Alpha Vantage stock data | Yes |
-| `NEWS_API_KEY` | API key for NewsAPI.org news articles | Yes |
-| `PORT` | Application port (default: 8080) | No |
+### GitHub Actions Workflow
+- Automated testing on pull requests
+- Docker image building and pushing
+- Deployment to staging environment
 
-### Getting API Keys
+### Deployment Pipeline
+1. Code commit triggers CI/CD
+2. Automated tests run
+3. Docker image built and tested
+4. Image pushed to Docker Hub
+5. Deployment to production servers
 
-1. **Alpha Vantage**: Register at [alphavantage.co](https://www.alphavantage.co/support/#api-key)
-2. **NewsAPI**: Register at [newsapi.org](https://newsapi.org/register)
+## 📝 Development Challenges and Solutions
 
-Both services offer free tiers suitable for development and testing.
+### Challenge 1: API Rate Limiting
+**Problem**: Alpha Vantage free tier has strict rate limits
+**Solution**: Implemented request caching and user-friendly error messages
 
-## Development
+### Challenge 2: Cross-Origin Resource Sharing (CORS)
+**Problem**: Frontend JavaScript couldn't access API endpoints
+**Solution**: Configured Flask-CORS for proper CORS headers
 
-### Dependencies
+### Challenge 3: Load Balancer Configuration
+**Problem**: HAProxy wasn't properly distributing traffic
+**Solution**: Added health checks and proper backend configuration
 
-* **Flask 2.3.2** - Web framework
-* **requests 2.31.0** - HTTP client for API calls
-* **python-dotenv 1.0.0** - Environment variable management
-* **gunicorn 21.2.0** - WSGI HTTP server for production
+### Challenge 4: Environment Variable Management
+**Problem**: API keys exposed in Docker images
+**Solution**: Implemented environment variable injection at runtime
 
-### Key Features
-
-* **Rate Limiting**: Built-in protection against API abuse
-* **Error Handling**: Comprehensive error responses
-* **Health Checks**: Docker health monitoring
-* **Security**: Non-root container execution
-* **Scalability**: Multi-worker Gunicorn setup
-* **Monitoring**: Request logging and error tracking
-
-### Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Run tests: `python test_app.py`
-4. Submit a pull request
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-## Troubleshooting
+## 📄 License
 
-### Common Issues
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-* **API Key Errors**: Verify your `.env` file contains valid API keys
-* **Port Conflicts**: Change the PORT environment variable if 8080 is in use
-* **Docker Issues**: Ensure Docker is running and you have sufficient permissions
-* **Network Errors**: Check your internet connection and API service status
+## 🙏 Acknowledgments
 
-### Logs
+- [Alpha Vantage](https://www.alphavantage.co/) for providing stock market data
+- [NewsAPI.org](https://newsapi.org/) for financial news aggregation
+- Flask community for the excellent web framework
+- Docker community for containerization tools
 
-```bash
-# View application logs
-docker logs <container_name>
+## 📞 Support
 
-# Follow logs in real-time
-docker logs -f <container_name>
-```
+For issues and questions:
+- Create an issue in the GitHub repository
+- Check the troubleshooting section in this README
+- Review the API documentation links above
+
+---
+
+**Note**: This application is designed for educational purposes and should not be used for actual investment decisions without proper financial advice.

@@ -1,438 +1,384 @@
-# Part Two A: Docker Containers + Docker Hub + Three-Lab-Container Setup
+# Docker Deployment Guide - Part Two A
 
-## Overview
+This guide provides detailed instructions for deploying the Stock Market Data & News Aggregator application using Docker containers and Docker Hub, following the assignment requirements.
 
-This guide provides complete containerization and deployment instructions for a three-lab-container setup:
+## Prerequisites
 
-- **Web01**: Application server container
-- **Web02**: Application server container (redundancy)
-- **Lb01**: HAProxy load balancer container
+- Docker installed on your local machine
+- Docker Hub account
+- Access to the lab machines (Web01, Web02, Lb01)
+- API keys for Alpha Vantage and NewsAPI.org
 
-## 1. Containerization with Dockerfile
+## Docker Hub Image Details
 
-### Current Dockerfile Analysis
+- **Repository**: `your-dockerhub-username/stock-market-aggregator`
+- **Tags**: `v1`, `latest`
+- **Image URL**: `https://hub.docker.com/r/your-dockerhub-username/stock-market-aggregator`
 
-The application uses a production-ready Dockerfile with:
+## Step 1: Build and Test Locally
 
-- **Configurable Port**: Exposed on port 8080 (configurable via PORT environment variable)
-- **Security**: Non-root user execution
-- **Performance**: Gunicorn WSGI server with 4 workers
-- **Health Checks**: Built-in container health monitoring
-
-```dockerfile
-# Key configurations in existing Dockerfile:
-EXPOSE 8080
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--timeout", "120", "wsgi:app"]
-```
-
-### Port Configuration
-
-The application port is configurable through environment variables:
-
-- Default: 8080
-- Override: Set `PORT` environment variable
-
-## 2. Local Build and Test Steps
-
-### Step 1: Build the Docker Image
+### 1.1 Build the Docker Image
 
 ```bash
-# Build with semantic tag
-docker build -t stock-market-aggregator:v1 .
-docker build -t stock-market-aggregator:latest .
-
-# Verify image creation
-docker images | grep stock-market-aggregator
+# Build the image with your Docker Hub username
+docker build -t your-dockerhub-username/stock-market-aggregator:v1 .
 ```
 
-### Step 2: Local Testing
+### 1.2 Test the Image Locally
 
 ```bash
-# Create test environment file
-echo "ALPHA_VANTAGE_API_KEY=your_alpha_key" > .env.test
-echo "NEWS_API_KEY=your_news_key" >> .env.test
-
-# Run container locally
-docker run -d \
-  --name test-app \
-  -p 8080:8080 \
-  --env-file .env.test \
-  stock-market-aggregator:latest
-
-# Verify container is running
-docker ps | grep test-app
+# Run the container locally with environment variables
+docker run -p 8080:8080 \
+  -e ALPHA_VANTAGE_API_KEY="your_alpha_vantage_key" \
+  -e NEWS_API_KEY="your_news_api_key" \
+  your-dockerhub-username/stock-market-aggregator:v1
 ```
 
-### Step 3: Verification with curl
+### 1.3 Verify Local Functionality
 
 ```bash
-# Test main endpoint
-curl -f http://localhost:8080/
-# Expected: HTML response with application interface
+# Test the application
+curl http://localhost:8080
 
 # Test API endpoints
-curl -f http://localhost:8080/api/stock/AAPL
-# Expected: JSON with stock data
-
-curl -f http://localhost:8080/api/news
-# Expected: JSON with news articles
-
-# Test health endpoint (if container has health check)
-docker inspect test-app | grep -A 5 "Health"
-
-# Clean up test container
-docker stop test-app && docker rm test-app
+curl http://localhost:8080/api/stock/AAPL
+curl http://localhost:8080/api/news
 ```
 
-## 3. Docker Hub Publishing Process
+## Step 2: Push to Docker Hub
 
-### Step 1: Docker Hub Login
+### 2.1 Login to Docker Hub
 
 ```bash
-# Login to Docker Hub
 docker login
 # Enter your Docker Hub username and password
 ```
 
-### Step 2: Tag Images with Semantic Versioning
+### 2.2 Push the Image
 
 ```bash
-# Replace 'yourusername' with your Docker Hub username
-DOCKER_HUB_USERNAME="yourusername"
+# Push the v1 tag
+docker push your-dockerhub-username/stock-market-aggregator:v1
 
-# Tag with semantic versions
-docker tag stock-market-aggregator:latest $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
-docker tag stock-market-aggregator:v1 $DOCKER_HUB_USERNAME/stock-market-aggregator:v1
-docker tag stock-market-aggregator:v1 $DOCKER_HUB_USERNAME/stock-market-aggregator:v1.0.0
+# Tag as latest and push
+docker tag your-dockerhub-username/stock-market-aggregator:v1 your-dockerhub-username/stock-market-aggregator:latest
+docker push your-dockerhub-username/stock-market-aggregator:latest
 ```
 
-### Step 3: Push to Docker Hub
+### 2.3 Verify on Docker Hub
+
+Visit `https://hub.docker.com/r/your-dockerhub-username/stock-market-aggregator` to confirm the image is available.
+
+## Step 3: Deploy on Lab Machines
+
+### 3.1 Deploy on Web01
 
 ```bash
-# Push all tags
-docker push $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
-docker push $DOCKER_HUB_USERNAME/stock-market-aggregator:v1
-docker push $DOCKER_HUB_USERNAME/stock-market-aggregator:v1.0.0
-
-# Verify push success
-docker search $DOCKER_HUB_USERNAME/stock-market-aggregator
-```
-
-## 4. Three-Lab-Container Setup Deployment
-
-### Prerequisites
-
-- 3 lab machines: Web01, Web02, Lb01
-- Docker installed on all machines
-- Network connectivity between machines
-- API keys for Alpha Vantage and NewsAPI
-
-### Step 1: Deploy on Web01 Server
-
-```bash
-# SSH to Web01 machine
-ssh user@web01
+# SSH into Web01
+ssh user@web-01-ip
 
 # Pull the image
-docker pull $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
+docker pull your-dockerhub-username/stock-market-aggregator:v1
 
-# Create environment file
-cat > .env << EOF
-ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
-NEWS_API_KEY=your_news_api_key_here
-PORT=8080
-FLASK_ENV=production
-EOF
-
-# Run container with specific configuration
-docker run -d \
-  --name stock-app-web01 \
-  --restart unless-stopped \
+# Run the container
+docker run -d --name app --restart unless-stopped \
   -p 8080:8080 \
-  --env-file .env \
-  --memory=512m \
-  --memory-reservation=256m \
-  --health-cmd="curl -f http://localhost:8080/ || exit 1" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
+  -e ALPHA_VANTAGE_API_KEY="your_alpha_vantage_key" \
+  -e NEWS_API_KEY="your_news_api_key" \
+  your-dockerhub-username/stock-market-aggregator:v1
 
-# Verify deployment
-docker ps | grep stock-app-web01
-curl -f http://localhost:8080/
+# Verify the container is running
+docker ps
+
+# Test the application
+curl http://localhost:8080
 ```
 
-### Step 2: Deploy on Web02 Server
+### 3.2 Deploy on Web02
 
 ```bash
-# SSH to Web02 machine
-ssh user@web02
+# SSH into Web02
+ssh user@web-02-ip
 
 # Pull the image
-docker pull $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
+docker pull your-dockerhub-username/stock-market-aggregator:v1
 
-# Create environment file (same as Web01)
-cat > .env << EOF
-ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
-NEWS_API_KEY=your_news_api_key_here
-PORT=8080
-FLASK_ENV=production
-EOF
-
-# Run container (identical to Web01)
-docker run -d \
-  --name stock-app-web02 \
-  --restart unless-stopped \
+# Run the container
+docker run -d --name app --restart unless-stopped \
   -p 8080:8080 \
-  --env-file .env \
-  --memory=512m \
-  --memory-reservation=256m \
-  --health-cmd="curl -f http://localhost:8080/ || exit 1" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  $DOCKER_HUB_USERNAME/stock-market-aggregator:latest
+  -e ALPHA_VANTAGE_API_KEY="your_alpha_vantage_key" \
+  -e NEWS_API_KEY="your_news_api_key" \
+  your-dockerhub-username/stock-market-aggregator:v1
 
-# Verify deployment
-docker ps | grep stock-app-web02
-curl -f http://localhost:8080/
+# Verify the container is running
+docker ps
+
+# Test the application
+curl http://localhost:8080
 ```
 
-### Step 3: Configure HAProxy Load Balancer (Lb01)
-
-#### HAProxy Configuration File
+### 3.3 Verify Internal Connectivity
 
 ```bash
-# SSH to Lb01 machine
-ssh user@lb01
+# From Web01, test Web02
+curl http://web-02:8080
 
-# Create HAProxy configuration
-sudo mkdir -p /etc/haproxy
-sudo tee /etc/haproxy/haproxy.cfg > /dev/null << 'EOF'
+# From Web02, test Web01
+curl http://web-01:8080
+```
+
+## Step 4: Configure Load Balancer (Lb01)
+
+### 4.1 SSH into Lb01
+
+```bash
+ssh user@lb-01-ip
+```
+
+### 4.2 Update HAProxy Configuration
+
+Edit the HAProxy configuration file:
+
+```bash
+# Edit the HAProxy config file
+nano /etc/haproxy/haproxy.cfg
+```
+
+Add or update the backend section:
+
+```haproxy
+# Global settings
 global
     daemon
     maxconn 4096
-    log stdout local0 info
 
 defaults
     mode http
     timeout connect 5000ms
     timeout client 50000ms
     timeout server 50000ms
-    option httplog
-    option dontlognull
-    option redispatch
-    retries 3
 
-frontend stock_app_frontend
+frontend http_front
     bind *:80
-    default_backend stock_app_servers
-    
-    # Health check endpoint
-    acl health_check path_beg /health
-    use_backend health_backend if health_check
+    default_backend webapps
 
-backend stock_app_servers
+backend webapps
     balance roundrobin
+    server web01 172.20.0.11:8080 check
+    server web02 172.20.0.12:8080 check
     option httpchk GET /
     http-check expect status 200
-    
-    # Replace with actual IP addresses of Web01 and Web02
-    server web01 <WEB01_IP>:8080 check inter 30s fall 3 rise 2
-    server web02 <WEB02_IP>:8080 check inter 30s fall 3 rise 2
+```
 
-backend health_backend
-    http-request return status 200 content-type text/plain string "HAProxy Health OK"
+### 4.3 Reload HAProxy
 
-listen stats
-    bind *:8404
-    stats enable
-    stats uri /stats
-    stats refresh 30s
-    stats admin if TRUE
+```bash
+# Reload HAProxy configuration
+docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
+
+# Or restart the HAProxy container
+docker restart lb-01
+```
+
+### 4.4 Verify HAProxy Configuration
+
+```bash
+# Check HAProxy status
+docker exec -it lb-01 haproxy -c -f /etc/haproxy/haproxy.cfg
+
+# Check HAProxy stats (if available)
+curl http://lb-01:8080/stats
+```
+
+## Step 5: Testing Load Balancing
+
+### 5.1 Test End-to-End from Host
+
+```bash
+# Test multiple times to see round-robin in action
+curl http://localhost
+curl http://localhost
+curl http://localhost
+curl http://localhost
+```
+
+### 5.2 Verify Round-Robin Distribution
+
+You should see responses alternating between Web01 and Web02. To verify this:
+
+```bash
+# Add a simple identifier to responses
+# In your app.py, add a response header or modify the response to include server info
+```
+
+### 5.3 Monitor Load Balancer
+
+```bash
+# Check HAProxy logs
+docker logs lb-01
+
+# Check application logs
+docker logs <web01-container-name>
+docker logs <web02-container-name>
+```
+
+## Step 6: Security and Hardening
+
+### 6.1 Environment Variables
+
+Instead of hardcoding API keys, use environment variables:
+
+```bash
+# Create a .env file on each server
+cat > .env << EOF
+ALPHA_VANTAGE_API_KEY=your_actual_key
+NEWS_API_KEY=your_actual_key
 EOF
+
+# Use the .env file
+docker run -d --name app --restart unless-stopped \
+  -p 8080:8080 \
+  --env-file .env \
+  your-dockerhub-username/stock-market-aggregator:v1
 ```
 
-#### Deploy HAProxy Container
+### 6.2 Docker Secrets (Optional)
+
+For production environments, consider using Docker secrets:
 
 ```bash
-# Run HAProxy container
-docker run -d \
-  --name haproxy-lb01 \
-  --restart unless-stopped \
-  -p 80:80 \
-  -p 8404:8404 \
-  -v /etc/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
-  haproxy:2.8-alpine
+# Create secrets
+echo "your_alpha_vantage_key" | docker secret create alpha_vantage_key -
+echo "your_news_api_key" | docker secret create news_api_key -
 
-# Verify HAProxy is running
-docker ps | grep haproxy-lb01
-docker logs haproxy-lb01
+# Use secrets in docker-compose
+version: '3.8'
+services:
+  app:
+    image: your-dockerhub-username/stock-market-aggregator:v1
+    secrets:
+      - alpha_vantage_key
+      - news_api_key
+    environment:
+      - ALPHA_VANTAGE_API_KEY_FILE=/run/secrets/alpha_vantage_key
+      - NEWS_API_KEY_FILE=/run/secrets/news_api_key
 ```
 
-#### HAProxy Reload Command
+## Step 7: Monitoring and Troubleshooting
+
+### 7.1 Health Checks
+
+The application includes health checks:
 
 ```bash
-# Reload HAProxy configuration without downtime
-docker exec haproxy-lb01 haproxy -f /usr/local/etc/haproxy/haproxy.cfg -c
-docker kill -s HUP haproxy-lb01
+# Check container health
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# Alternative: Restart container (brief downtime)
-docker restart haproxy-lb01
+# Check specific container health
+docker inspect <container-name> | grep -A 10 "Health"
 ```
 
-## 5. End-to-End Testing and Verification
-
-### Step 1: Basic Connectivity Tests
+### 7.2 Logs
 
 ```bash
-# From host machine, test individual servers
-curl -f http://<WEB01_IP>:8080/
-curl -f http://<WEB02_IP>:8080/
+# View application logs
+docker logs <container-name>
 
-# Test load balancer
-curl -f http://<LB01_IP>/
+# Follow logs in real-time
+docker logs -f <container-name>
+
+# View HAProxy logs
+docker logs lb-01
 ```
 
-### Step 2: Load Balancing Verification
+### 7.3 Common Issues and Solutions
+
+#### Issue: Container won't start
 
 ```bash
-# Test traffic distribution (run from host machine)
-echo "Testing load balancing distribution..."
-for i in {1..20}; do
-    response=$(curl -s http://<LB01_IP>/ | grep -o "Server: [^<]*" || echo "Response $i")
-    echo "Request $i: $response"
-    sleep 1
-done
+# Check container logs
+docker logs <container-name>
 
-# Test with API endpoints
-echo "Testing API load balancing..."
-for i in {1..10}; do
-    curl -s http://<LB01_IP>/api/stock/AAPL | jq '.symbol' || echo "API test $i failed"
-    sleep 2
-done
+# Verify environment variables
+docker exec <container-name> env | grep API
 ```
 
-### Step 3: Failover Testing
+#### Issue: Load balancer not distributing traffic
 
 ```bash
-# Stop Web01 and verify Web02 handles all traffic
-ssh user@web01 "docker stop stock-app-web01"
+# Check HAProxy configuration
+docker exec -it lb-01 haproxy -c -f /etc/haproxy/haproxy.cfg
 
-echo "Testing failover to Web02..."
-for i in {1..10}; do
-    curl -f http://<LB01_IP>/ && echo "Request $i: SUCCESS" || echo "Request $i: FAILED"
-    sleep 1
-done
-
-# Restart Web01
-ssh user@web01 "docker start stock-app-web01"
-
-# Wait for health check and test distribution resumes
-sleep 60
-echo "Testing restored load balancing..."
-for i in {1..10}; do
-    curl -s http://<LB01_IP>/ | grep -o "Server: [^<]*" || echo "Test $i"
-    sleep 1
-done
+# Check backend servers
+docker exec -it lb-01 haproxy -c -f /etc/haproxy/haproxy.cfg | grep -A 5 "backend"
 ```
 
-### Step 4: HAProxy Statistics Monitoring
+#### Issue: API rate limiting
+
+- Implement caching in the application
+- Use multiple API keys
+- Add retry logic with exponential backoff
+
+## Step 8: Performance Optimization
+
+### 8.1 Container Optimization
 
 ```bash
-# Access HAProxy stats page
-curl http://<LB01_IP>:8404/stats
-
-# Or open in browser: http://<LB01_IP>:8404/stats
+# Use resource limits
+docker run -d --name app --restart unless-stopped \
+  -p 8080:8080 \
+  --memory="512m" \
+  --cpus="0.5" \
+  -e ALPHA_VANTAGE_API_KEY="your_key" \
+  -e NEWS_API_KEY="your_key" \
+  your-dockerhub-username/stock-market-aggregator:v1
 ```
 
-## 6. Evidence Collection
+### 8.2 Load Balancer Optimization
 
-### Required Screenshots/Logs
-
-1. **Docker Build Output**:
-
-   ```bash
-   docker build -t stock-market-aggregator:v1 . 2>&1 | tee build.log
-   ```
-
-2. **Docker Hub Push Confirmation**:
-
-   ```bash
-   docker push $DOCKER_HUB_USERNAME/stock-market-aggregator:latest 2>&1 | tee push.log
-   ```
-
-3. **Container Status on All Servers**:
-
-   ```bash
-   # On each server
-   docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" > container_status.log
-   ```
-
-4. **HAProxy Stats Page**: Screenshot of http://<LB01_IP>:8404/stats
-
-5. **Load Balancing Evidence**:
-
-   ```bash
-   # Capture load balancing logs
-   for i in {1..50}; do
-       echo "$(date): $(curl -s http://<LB01_IP>/ | grep -o 'Server: [^<]*')"
-   done > load_balance_test.log
-   ```
-
-6. **Failover Test Results**:
-
-   ```bash
-   # Document failover behavior
-   echo "Failover test started: $(date)" > failover_test.log
-   # Stop one server and test
-   # Document results
-   ```
-
-## 7. Security Considerations
-
-### Environment Variables Protection
-
-```bash
-# Secure .env file permissions
-chmod 600 .env
-chown root:root .env
-
-# Use Docker secrets in production
-echo "your_api_key" | docker secret create alpha_vantage_key -
-echo "your_news_key" | docker secret create news_api_key -
+```haproxy
+backend webapps
+    balance roundrobin
+    server web01 172.20.0.11:8080 check maxconn 100
+    server web02 172.20.0.12:8080 check maxconn 100
+    option httpchk GET /
+    http-check expect status 200
+    timeout connect 5s
+    timeout server 30s
 ```
 
-### Network Security
+## Verification Checklist
 
-```bash
-# Create custom Docker network for container communication
-docker network create --driver bridge stock-app-network
+- [ ] Docker image builds successfully
+- [ ] Image pushed to Docker Hub
+- [ ] Containers running on Web01 and Web02
+- [ ] Applications accessible on both servers
+- [ ] HAProxy configuration updated
+- [ ] Load balancer distributing traffic
+- [ ] Round-robin working correctly
+- [ ] Health checks passing
+- [ ] Logs showing successful requests
+- [ ] Security measures implemented
 
-# Run containers with custom network
-docker run -d --network stock-app-network --name stock-app-web01 ...
-```
+## Demo Video Requirements
 
-## 8. Monitoring and Maintenance
+Record a 2-minute demo video showing:
 
-### Health Monitoring
+1. **Local Application (30 seconds)**
+   - Starting the application locally
+   - Entering stock symbols (AAPL, MSFT, GOOGL)
+   - Demonstrating sorting and filtering features
+   - Showing news aggregation
 
-```bash
-# Check container health status
-docker inspect stock-app-web01 | jq '.[0].State.Health'
+2. **Load Balancer Testing (30 seconds)**
+   - Accessing the application through the load balancer
+   - Making multiple requests to show round-robin
+   - Demonstrating that requests alternate between servers
 
-# Monitor HAProxy backend status
-curl -s http://<LB01_IP>:8404/stats | grep -E "(web01|web02)"
-```
+3. **Key Features (60 seconds)**
+   - Real-time stock data display
+   - News search and filtering
+   - Error handling for invalid symbols
+   - Responsive design on different screen sizes
 
-### Log Management
-
-```bash
-# Centralized logging
-docker logs --follow stock-app-web01 > /var/log/stock-app-web01.log &
-docker logs --follow stock-app-web02 > /var/log/stock-app-web02.log &
-docker logs --follow haproxy-lb01 > /var/log/haproxy-lb01.log &
-```
-
-This deployment guide provides complete instructions for containerizing, publishing, and deploying the Stock Market Data & News Aggregator in a three-lab-container setup with HAProxy load balancing and comprehensive testing procedures.
+The video should demonstrate the application's practical value for investors and financial enthusiasts.

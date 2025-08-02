@@ -86,92 +86,88 @@ python app.py
 
 The application will be available at `http://localhost:8080`
 
-## 🐳 Docker Deployment
+## 🚀 Simple Server Deployment (No Docker)
 
-### Local Docker Build
-
-```bash
-# Build the image
-docker build -t stock-market-aggregator:v1 .
-
-# Run the container
-docker run -p 8080:8080 --env-file .env stock-market-aggregator:v1
-
-# Test the application
-curl http://localhost:8080
-```
-
-### Docker Hub Deployment
-
-#### 1. Build and Tag
+### Quick Setup
 
 ```bash
-docker build -t <your-dockerhub-username>/stock-market-aggregator:v1 .
+# 1. Copy files to server
+scp -r Stock-Market-Data-News-Aggregator/ user@server:/home/user/
+
+# 2. SSH to server and deploy
+ssh user@server
+cd Stock-Market-Data-News-Aggregator
+chmod +x simple-deploy.sh
+./simple-deploy.sh
+
+# 3. Start the application
+./start-app.sh
 ```
 
-#### 2. Push to Docker Hub
+### Alternative: Systemd Service
 
 ```bash
-docker login
-docker push <your-dockerhub-username>/stock-market-aggregator:v1
+# For production deployment with auto-restart
+chmod +x systemd-deploy.sh
+sudo ./systemd-deploy.sh
 ```
 
-## 🌐 Production Deployment
+## 🌐 Simple Lab Deployment
 
-### Lab Environment Setup
+### Step-by-Step Lab Setup
 
 #### 1. Deploy on Web Servers
 
-**Web01:**
+**Both web-01 and web-02:**
 
 ```bash
-ssh web-01
-docker pull <your-dockerhub-username>/stock-market-aggregator:v1
-docker run -d --name app --restart unless-stopped \
-  -p 8080:8080 \
-  -e ALPHA_VANTAGE_API_KEY=your_key \
-  -e NEWS_API_KEY=your_key \
-  <your-dockerhub-username>/stock-market-aggregator:v1
+# Copy project files
+scp -r Stock-Market-Data-News-Aggregator/ user@server:/home/user/
+
+# SSH to each server
+ssh user@server
+cd Stock-Market-Data-News-Aggregator
+
+# Quick deployment
+chmod +x simple-deploy.sh
+./simple-deploy.sh
+./start-app.sh
 ```
 
-**Web02:**
+#### 2. Load Balancer Setup (Nginx)
+
+**On lb-01:**
 
 ```bash
-ssh web-02
-docker pull <your-dockerhub-username>/stock-market-aggregator:v1
-docker run -d --name app --restart unless-stopped \
-  -p 8080:8080 \
-  -e ALPHA_VANTAGE_API_KEY=your_key \
-  -e NEWS_API_KEY=your_key \
-  <your-dockerhub-username>/stock-market-aggregator:v1
+# Copy and run load balancer setup
+scp load-balancer-setup.sh user@lb-01:/home/user/
+ssh user@lb-01
+chmod +x load-balancer-setup.sh
+sudo ./load-balancer-setup.sh
 ```
 
-#### 2. Configure Load Balancer
-
-Update `/etc/haproxy/haproxy.cfg` on lb-01:
-
-```haproxy
-backend webapps
-    balance roundrobin
-    server web01 172.20.0.11:8080 check
-    server web02 172.20.0.12:8080 check
-```
-
-Reload HAProxy:
+#### 3. Quick Testing
 
 ```bash
-docker exec -it lb-01 sh -c 'haproxy -sf $(pidof haproxy) -f /etc/haproxy/haproxy.cfg'
+# Test individual servers
+curl http://172.20.0.11:8080  # web-01
+curl http://172.20.0.12:8080  # web-02
+
+# Test load balancer (nginx round-robin)
+for i in {1..6}; do curl http://your-lb-ip; echo; done
 ```
 
-#### 3. Test Load Balancing
+### Management Commands
 
 ```bash
-# Test multiple requests to verify round-robin
-for i in {1..10}; do
-  curl http://localhost
-  echo "Request $i completed"
-  sleep 1
-done
+# Start/Stop application
+./start-app.sh   # Start
+./stop-app.sh    # Stop
+
+# Or with systemd (if using systemd-deploy.sh)
+sudo systemctl start stock-market-app
+sudo systemctl stop stock-market-app
+sudo systemctl status stock-market-app
 ```
 
 ## 🧪 Testing

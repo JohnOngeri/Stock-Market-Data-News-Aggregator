@@ -91,18 +91,34 @@ document.addEventListener('DOMContentLoaded', () => {
         stockTableContainer.appendChild(table);
     }
 
-    function displayNewsData(newsData) {
-        if (!newsData || newsData.length === 0) {
-            newsArticlesContainer.innerHTML = '<p class="no-data">No news articles found.</p>';
-            return;
-        }
-
-        newsArticlesContainer.innerHTML = newsData.map(article => `
-            <div class="news-article">
-                <h3><a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a></h3>
-                <p class="article-description">${article.description || ''}</p>
-                <p class="article-date">${article.publishedAt ? `Published: ${new Date(article.publishedAt).toLocaleString()}` : ''}</p>
+function displayNewsData(newsData) {
+    if (!newsData || newsData.length === 0) {
+        newsArticlesContainer.innerHTML = `
+            <div class="no-news">
+                <p>📰 No recent news found for these stocks.</p>
+                <p><strong>Try:</strong></p>
+                <ul>
+                    <li>Searching for company names (e.g., "Apple" instead of "AAPL")</li>
+                    <li>Checking general market news below</li>
+                </ul>
+                <button id="loadMarketNews" class="btn">Show General Market News</button>
             </div>
-        `).join('');
+        `;
+        // Add click handler for fallback
+        document.getElementById('loadMarketNews')?.addEventListener('click', () => {
+            fetch('/api/news')
+                .then(res => res.json())
+                .then(data => displayNewsData(data.articles));
+        });
+        return;
     }
+
+    newsArticlesContainer.innerHTML = newsData.map(article => `
+        <div class="news-article">
+            <h3><a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a></h3>
+            <p class="article-description">${article.description || ''}</p>
+            <p class="article-date">${article.publishedAt ? `Published: ${new Date(article.publishedAt).toLocaleString()}` : ''}</p>
+        </div>
+    `).join('');
+}
 });
